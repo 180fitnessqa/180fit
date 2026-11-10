@@ -144,6 +144,13 @@ label{font-size:14px;font-weight:500}
 .lv h4,.col h3{font-weight:800}
 .grid{gap:12px}
 .saved span{font-weight:500}
+.col{max-height:100%}
+.pl{flex:1;min-height:0;overflow:hidden;display:grid;grid-template-columns:repeat(var(--pc,1),minmax(0,1fr));gap:.5em;align-content:start}
+.pl .kp{align-self:start}
+:-webkit-full-screen #ch{padding-left:64px}
+:fullscreen #ch{padding-left:64px}
+:-webkit-full-screen #show.on>img.logo{margin-left:56px}
+:fullscreen #show.on>img.logo{margin-left:56px}
 </style>
 </head>
 <body>
@@ -495,12 +502,21 @@ function kcard(p,l,i){
     d.appendChild(r)});
   return d;
 }
-function kcol(l,h,idx){const c=document.createElement('div');c.className='col';const t=document.createElement('h3');t.textContent=h;c.appendChild(t);idx.forEach(i=>c.appendChild(kcard(K.parts[i],l,i)));return c}
+function kcol(l,h,idx){const c=document.createElement('div');c.className='col';const t=document.createElement('h3');t.textContent=h;c.appendChild(t);const pl=document.createElement('div');pl.className='pl';idx.forEach(i=>pl.appendChild(kcard(K.parts[i],l,i)));c.appendChild(pl);return c}
 function kmark(){document.querySelectorAll('#cb .kp').forEach(d=>{const i=+d.dataset.i;d.classList.toggle('act',i==ki);d.classList.toggle('done',i<ki&&kmode=='run')})}
-function kfit(big){
-  const cols=[...document.querySelectorAll('#cb .col')];let fs=Math.floor(innerHeight*(big?.12:.075));
-  const set=v=>cols.forEach(c=>c.style.setProperty('--fs',v+'px'));set(fs);
-  while(fs>12&&cols.some(c=>c.scrollHeight>c.clientHeight+1)){fs--;set(fs)}
+function kfit(big,again){
+  const cols=[...document.querySelectorAll('#cb .col')];if(!cols.length)return;
+  const pls=cols.map(c=>c.querySelector('.pl'));
+  const hi=Math.floor(innerHeight*(big?.14:.09));
+  const fits=()=>pls.every(p=>p.scrollHeight<=p.clientHeight+1&&p.scrollWidth<=p.clientWidth+1);
+  const best=pc=>{cols.forEach(c=>c.style.setProperty('--pc',pc));let lo=9,h=hi,r=9;while(lo<=h){const m=(lo+h)>>1;cols.forEach(c=>c.style.setProperty('--fs',m+'px'));if(fits()){r=m;lo=m+1}else h=m-1}return r};
+  const a=best(1),b=big?0:best(2),pc=b>a*1.08?2:1,fs=pc==2?b:a;
+  cols.forEach(c=>{c.style.setProperty('--pc',pc);c.style.setProperty('--fs',fs+'px')});
+  if(!again){
+    const re=()=>{if($('cal').classList.contains('on'))kfit(big,1)};
+    setTimeout(re,700);
+    if(document.fonts&&document.fonts.status==='loading')document.fonts.ready.then(re);
+  }
 }
 function krender(){
   const cb=$('cb');cb.className='';cb.innerHTML='';
